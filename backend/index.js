@@ -6,12 +6,33 @@ import session from "express-session";
 import MongoStore from "connect-mongo";
 import passport from "passport";
 import './config/passport.js';
+import cors from "cors";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const MONGO_URL =
   process.env.MONGO_URL || "mongodb://localhost:27017/focus-flow-app";
 const SESSION_SECRET = process.env.SESSION_SECRET;
+
+
+
+app.use(cors({
+  origin: process.env.FRONTEND_URL || "http://localhost:5173",
+  credentials: true,
+}));
+
+app.use(express.json());
+app.use(session({
+    secret: SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({ mongoUrl: MONGO_URL || "mongodb://localhost:27017/focus-flow-app", collectionName: 'sessions'}),
+    cookie: { maxAge: 1000 * 60 * 60 * 24, httpOnly: true } // 1 day\
+    
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
 
 mongoose
   .connect(MONGO_URL)
@@ -21,27 +42,9 @@ mongoose
   .catch((error) => {
     console.error("Error connecting to MongoDB:", error);
   });
-
-
-
-app.use(express.json());
-app.use(session({
-    secret: SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    store: MongoStore.create({ mongoUrl: MONGO_URL, collectionName: 'sessions'}),
-    cookie: { maxAge: 1000 * 60 * 60 * 24, httpOnly: true } // 1 day\
-    
-}));
-
-app.use(passport.initialize());
-app.use(passport.session());
-
+  
 app.use("/api/auth", authRouter);
 
-app.get("/", (req, res) => {
-  res.send("Hello, World!");
-});
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
