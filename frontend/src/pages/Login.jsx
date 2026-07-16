@@ -46,7 +46,7 @@ function Login() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition duration-200 text-sm bg-slate-50/50 text-slate-700"
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition duration-200 text-sm bg-slate-50/50 text-slate-700"
             />
           </div>
 
@@ -57,14 +57,14 @@ function Login() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition duration-200 text-sm bg-slate-50/50 text-slate-700"
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition duration-200 text-sm bg-slate-50/50 text-slate-700"
             />
           </div>
 
           <button 
             type="submit" 
             disabled={isSubmitting}
-            className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold rounded-xl shadow-sm hover:shadow transition duration-200 text-sm cursor-pointer"
+            className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-semibold rounded-xl shadow-sm hover:shadow transition duration-200 text-sm cursor-pointer"
           >
             {isSubmitting ? 'Connecting...' : 'Login'}
           </button>
@@ -72,7 +72,7 @@ function Login() {
 
         <p className="mt-6 text-center text-sm text-slate-600">
           Don't have an account?{' '}
-          <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500 cursor-pointer transition duration-150 ease-in-out">
+          <Link to="/register" className="font-medium text-indigo-600 hover:text-indigo-500 cursor-pointer transition duration-150 ease-in-out">
             Create one
           </Link>
         </p>
