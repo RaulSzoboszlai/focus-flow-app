@@ -21,6 +21,14 @@ const userSchema = new mongoose.Schema({
     trim: true,
     minLength: [3, "Display name must be at least 3 characters long"],
   },
+  currentStreak: {
+    type: Number,
+    default: 0,
+  },
+  lastActiveDate: {
+    type: Date,
+    default: null,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

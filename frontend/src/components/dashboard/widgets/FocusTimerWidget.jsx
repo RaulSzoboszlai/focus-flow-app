@@ -22,10 +22,10 @@ function FocusTimerWidget({ onTimerComplete }) {
       }, 1000);
     } else if (timeLeft === 0) {
       clearInterval(interval);
-      setIsActive = false;
+      setIsActive(false);
 
       if (onTimerComplete) {
-        onTimerComplete(25);
+        onTimerComplete(selectedMinutes);
       }
 
       alert("Session done. Take a break!");

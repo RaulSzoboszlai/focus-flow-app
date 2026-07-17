@@ -2,6 +2,8 @@ import express from "express";
 import dotenv from "dotenv/config";
 import mongoose from "mongoose";
 import authRouter from "./routes/auth.js";
+import taskRouter from "./routes/tasks.js";
+import goalRouter from "./routes/goals.js";
 import session from "express-session";
 import MongoStore from "connect-mongo";
 import passport from "passport";
@@ -44,7 +46,8 @@ mongoose
   });
   
 app.use("/api/auth", authRouter);
-
+app.use("/api/tasks", taskRouter);
+app.use("/api/goals", goalRouter);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

@@ -5,7 +5,7 @@ import { checkSchema, validationResult, matchedData } from "express-validator";
 import {
   registerSchema,
   loginSchema,
-} from "../validators/validationSchemas.js";
+} from "../validators/validationAuthSchemas.js";
 import passport from "passport";
 
 const router = Router();
