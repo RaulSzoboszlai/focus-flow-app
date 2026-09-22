@@ -21,7 +21,7 @@ function GoalsWidget({ goals }) {
 
       <div className="space-y-5">
         {goals.map((goal) => (
-          <div key={goal.id} className="space-y-2">
+          <div key={goal._id} className="space-y-2">
             <div className="flex justify-between items-center text-sm">
               <span className="font-semibold text-slate-700">{goal.title}</span>
               <span className="text-xs font-bold text-slate-500">

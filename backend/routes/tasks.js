@@ -22,6 +22,12 @@ router.get("/", async (req, res) => {
 });
 
 router.post("/", checkSchema(createTaskSchema), async (req, res) => {
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  
   try {
     const validatedData = matchedData(req);
     const { title, category, time, linkedGoalId, goalContribution } =

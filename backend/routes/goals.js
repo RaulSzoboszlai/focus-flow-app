@@ -26,25 +26,25 @@ router.get("/today", async (req, res) => {
       date: today,
     });
 
-    if (goasls.length > 0) {
-      res.status(200).json(goals);
+    if (goals.length > 0) {
+      return res.status(200).json(goals);
     }
 
-    const user = User.findById(userId);
+    const user = await User.findById(userId);
 
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
 
     let newStreak = user.currentStreak;
 
-    if (user.lastActiveDay) {
+    if (user.lastActiveDate) {
       const lastActive = new Date(user.lastActiveDate);
       lastActive.setHours(0, 0, 0, 0);
 
       if (lastActive.getTime() === yesterday.getTime()) {
         const yesterdayGoals = await Goal.find({ userId, date: yesterday });
 
-        const completedGoals = yesterdayGoals > 0;
+        const completedGoals = yesterdayGoals.length > 0;
 
         if (completedGoals) {
           newStreak += 1;

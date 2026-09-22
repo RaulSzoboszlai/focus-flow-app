@@ -5,79 +5,98 @@ import MetricCard from "../components/dashboard/cards/MetricCard";
 import TasksWidget from "../components/dashboard/widgets/TaskWidget";
 import GoalsWidget from "../components/dashboard/widgets/GoalsWidget";
 import FocusTimerWidget from "../components/dashboard/widgets/FocusTimerWidget";
+import { useEffect } from "react";
+import api from '../services/api.js';
 
 function Dashboard() {
   const { user } = useAuth();
 
-  const [tasks, setTasks] = useState([
-    {
-      id: 1,
-      text: "Read 20 pages",
-      category: "Personal",
-      time: "9:00 AM",
-      completed: true,
-    },
-    {
-      id: 2,
-      text: "Build project landing page",
-      category: "Work",
-      time: "11:00 AM",
-      completed: false,
-    },
-    {
-      id: 3,
-      text: "Workout",
-      category: "Health",
-      time: "4:00 PM",
-      completed: false,
-    },
-    {
-      id: 4,
-      text: "Learn TypeScript",
-      category: "Learning",
-      time: "6:00 PM",
-      completed: false,
-    },
-  ]);
-
+  const [tasks, setTasks] = useState([]);
   const [focusMinutes, setFocusMinutes] = useState(0);
+  const [dailyGoals, setDailyGoals] = useState([]);
 
-  const [dailyGoals, setDailyGoals] = useState([
-    {
-      id: 1,
-      title: "Complete 3 tasks",
-      current: 3,
-      target: 3,
-      type: "numeric",
-    },
-    {
-      id: 2,
-      title: "Focus for 2+ hours",
-      current: 165,
-      target: 120,
-      type: "time",
-    },
-  ]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const handleToggleTask = (taskId) => {
-    setTasks(
-      tasks.map((task) =>
-        task.id === taskId ? { ...task, completed: !task.completed } : task,
-      ),
-    );
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+
+        const [tasksResponse, goalsResponse] = await Promise.all([
+          api.get('/tasks'),
+          api.get('/goals/today')
+        ]);
+
+        setTasks(tasksResponse.data);
+        setDailyGoals(goalsResponse.data);
+
+        const timeGoal = goalsResponse.data.find(goal => goal.type === 'time');
+        if (timeGoal) {
+          setFocusMinutes(timeGoal.current);
+        }
+
+        setLoading(false);
+      } catch (err) {
+        console.log(err);
+        setError("Couldn't get retrieve data. Please try again.");
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  const handleAddTask = (newTask) => {
+    setTasks((prevTasks) => [newTask, ...prevTasks]);
+  };
+
+  const handleToggleTask = async (taskId) => {
+    try {
+      const response = await api.patch(`/tasks/${taskId}/toggle`);
+
+      if (response.status === 200) {
+        setTasks(tasks.map(task => task._id === taskId ? { ...task, completed: !task.completed } : task));
+
+        const goalsResponse = await api.get('/goals/today');
+        setDailyGoals(goalsResponse.data);
+      }
+    } catch (err) {
+      console.log(err);
+      alert("Error occured. Task status couldn't be saved.");
+    }
   };
 
   const handleTimerComplete = (minutes) => {
     setFocusMinutes((prev) => prev + minutes);
+    // TODO: an api call for saving the time in db
   };
 
   const completedTasksCount = tasks.filter((t) => t.completed).length;
 
-  const dynamicGoals = dailyGoals.map((goal) => {
-    if (goal.id === 1) return { ...goal, current: completedTasksCount };
-    if (goal.id === 2) return { ...goal, current: focusMinutes };
-    return goal;
-  });
+
+  if (loading) {
+    return (
+      <div className="flex h-screen bg-slate-50 items-center justify-center font-sans">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-slate-500 text-sm font-medium">Dashboard is loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-screen bg-slate-50 items-center justify-center font-sans p-4">
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm max-w-md text-center">
+          <p className="text-rose-600 font-semibold mb-2">Something went wrong!</p>
+          <p className="text-slate-500 text-sm mb-4">{error}</p>
+          <button onClick={() => window.location.reload()} className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium cursor-pointer">Reîncearcă</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen bg-slate-50 text-slate-800 font-sans overflow-hidden">
@@ -95,11 +114,10 @@ function Dashboard() {
           </div>
         </header>
 
-        {/* METRICS GRID */}
         <section className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8">
           <MetricCard
             title="Tasks Completed"
-            value={completedTasksCount} // <-- Acum e dinamic!
+            value={completedTasksCount} 
             subtext={`+${completedTasksCount} today`}
             icon={
               <svg
@@ -130,24 +148,20 @@ function Dashboard() {
               </svg>
             }
           />
-          {/* Adaugă și celelalte două MetricCards la fel ca înainte */}
         </section>
 
-        {/* WIDGETS GRID */}
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-          {/* Coloana 1: Tasks */}
+    
           <div className="lg:col-span-1">
-            <TasksWidget tasks={tasks} onToggleTask={handleToggleTask} />
+            <TasksWidget tasks={tasks} onToggleTask={handleToggleTask} onAddTask={handleAddTask} />
           </div>
 
-          {/* Coloana 2: Focus Timer */}
           <div className="lg:col-span-1">
             <FocusTimerWidget onTimerComplete={handleTimerComplete} />
           </div>
 
-          {/* Coloana 3: Daily Goals */}
           <div className="lg:col-span-1">
-            <GoalsWidget goals={dynamicGoals} />
+            <GoalsWidget goals={dailyGoals} />
           </div>
         </section>
       </main>
