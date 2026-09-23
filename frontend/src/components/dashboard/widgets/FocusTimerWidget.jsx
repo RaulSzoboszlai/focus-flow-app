@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 function FocusTimerWidget({ onTimerComplete }) {
   const TIME_OPTIONS = [15, 30, 45, 60];
 
-  const [selectedMinutes, setSelectedMinutes] = useState(25);
+  const [selectedMinutes, setSelectedMinutes] = useState(30);
   const [timeLeft, setTimeLeft] = useState(selectedMinutes);
   const [isActive, setIsActive] = useState(false);
 

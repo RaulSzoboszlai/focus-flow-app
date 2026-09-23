@@ -11,9 +11,22 @@ router.use(isAuthenticated);
 
 router.get("/", async (req, res) => {
   try {
-    const tasks = await Task.find({ userId: req.user.id }).sort({
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const tasks = await Task.find({
+      userId: req.user.id,
+      createdAt: {
+        $gte: startOfDay,
+        $lte: endOfDay,
+      },
+    }).sort({
       createdAt: -1,
     });
+
     res.status(200).json(tasks);
   } catch (err) {
     console.log(err);
@@ -27,7 +40,7 @@ router.post("/", checkSchema(createTaskSchema), async (req, res) => {
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
   }
-  
+
   try {
     const validatedData = matchedData(req);
     const { title, category, time, linkedGoalId, goalContribution } =
@@ -69,22 +82,32 @@ router.patch("/:id/toggle", async (req, res) => {
     task.completed = !task.completed;
     await task.save();
 
+    const incrementValue = !wasCompleted && task.completed ? 1 : -1;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    await Goal.findOneAndUpdate(
+      {
+        userId,
+        date: today,
+        title: "Complete 3 tasks",
+      },
+      { $inc: { current: incrementValue } },
+    );
+
     if (task.linkedGoalId) {
-      let incrementValue = 0;
+      const specificIncrement =
+        !wasCompleted && task.completed
+          ? task.goalContribution
+          : -task.goalContribution;
 
-      if (task.completed && !wasCompleted) {
-        incrementValue = task.goalContribution;
-      } else if (!task.completed && wasCompleted) {
-        incrementValue = -task.goalContribution;
-      }
-
-      if (incrementValue !== 0) {
-        await Goal.findOne(
-          { _id: task.linkedGoalId, userId },
-          { $inc: { current: incrementValue } },
-        );
-      }
+      await Goal.findOneAndUpdate(
+        { _id: task.linkedGoalId, userId },
+        { $inc: { current: specificIncrement } },
+      );
     }
+
     res.status(200).json({ message: "Task successfully updated" });
   } catch (err) {
     console.log(err);

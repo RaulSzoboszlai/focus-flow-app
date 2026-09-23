@@ -1,14 +1,10 @@
 import { Router } from "express";
-import {
-  check,
-  checkSchema,
-  matchedData,
-  validationResult,
-} from "express-validator";
+import { checkSchema, matchedData, validationResult } from "express-validator";
 import { createGoalSchema } from "../validators/validationGoalSchemas.js";
 import { isAuthenticated } from "../middleware/authMiddleware.js";
 import Goal from "../models/Goal.js";
 import User from "../models/User.js";
+import Task from "../models/Task.js";
 
 const router = Router();
 
@@ -26,27 +22,39 @@ router.get("/today", async (req, res) => {
       date: today,
     });
 
-    if (goals.length > 0) {
-      return res.status(200).json(goals);
-    }
-
     const user = await User.findById(userId);
+
+    if (goals.length > 0) {
+      return res.status(200).json({
+        goals,
+        streak: user.currentStreak || 0,
+      });
+    }
 
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
 
-    let newStreak = user.currentStreak;
+    let newStreak = user.currentStreak || 0;
 
     if (user.lastActiveDate) {
       const lastActive = new Date(user.lastActiveDate);
       lastActive.setHours(0, 0, 0, 0);
 
       if (lastActive.getTime() === yesterday.getTime()) {
-        const yesterdayGoals = await Goal.find({ userId, date: yesterday });
+        const yesterdayStart = new Date(0, 0, 0, 0);
+        const yesterdayEnd = new Date(23, 59, 59, 999);
+        const yesterdayTasks = await Task.find({
+          userId,
+          completed: true,
+          createdAt: {
+            $gte: yesterdayStart,
+            $lte: yesterdayEnd,
+          },
+        });
 
-        const completedGoals = yesterdayGoals.length > 0;
+        const completedTasks = yesterdayTasks.length > 0;
 
-        if (completedGoals) {
+        if (completedTasks) {
           newStreak += 1;
         } else {
           newStreak = 0;
@@ -81,7 +89,10 @@ router.get("/today", async (req, res) => {
 
     goals = await Goal.insertMany(defaultGoals);
 
-    res.status(200).json(goals);
+    res.status(200).json({
+      goals,
+      streak: user.currentStreak,
+    });
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "Internal server error" });
@@ -108,6 +119,40 @@ router.post("/", checkSchema(createGoalSchema), async (req, res) => {
 
     await newGoal.save();
     res.status(201).json(newGoal);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.patch("/focus", async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { minutes } = req.body;
+
+    if (!minutes || typeof minutes !== "number") {
+      return res.status(400).json({ message: "Invalid minutes provided" });
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const updatedGoal = await Goal.findOneAndUpdate(
+      {
+        userId,
+        date: today,
+        type: "time",
+      },
+      { $inc: { current: minutes } },
+      { new: true }
+    );
+
+    if (!updatedGoal) {
+      return res.status(404).json({ message: "Focus goal not found for today" });
+    }
+
+    res.status(200).json(updatedGoal);
+
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "Internal server error" });

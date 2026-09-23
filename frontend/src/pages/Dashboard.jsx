@@ -14,7 +14,7 @@ function Dashboard() {
   const [tasks, setTasks] = useState([]);
   const [focusMinutes, setFocusMinutes] = useState(0);
   const [dailyGoals, setDailyGoals] = useState([]);
-
+  const [streak, setStreak] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -29,9 +29,10 @@ function Dashboard() {
         ]);
 
         setTasks(tasksResponse.data);
-        setDailyGoals(goalsResponse.data);
+        setDailyGoals(goalsResponse.data.goals);
+        setStreak(goalsResponse.data.streak);
 
-        const timeGoal = goalsResponse.data.find(goal => goal.type === 'time');
+        const timeGoal = goalsResponse.data.goals.find(goal => goal.type === 'time');
         if (timeGoal) {
           setFocusMinutes(timeGoal.current);
         }
@@ -59,7 +60,8 @@ function Dashboard() {
         setTasks(tasks.map(task => task._id === taskId ? { ...task, completed: !task.completed } : task));
 
         const goalsResponse = await api.get('/goals/today');
-        setDailyGoals(goalsResponse.data);
+        setDailyGoals(goalsResponse.data.goals);
+        setStreak(goalsResponse.data.streak);
       }
     } catch (err) {
       console.log(err);
@@ -67,9 +69,22 @@ function Dashboard() {
     }
   };
 
-  const handleTimerComplete = (minutes) => {
+  const handleTimerComplete = async (minutes) => {
     setFocusMinutes((prev) => prev + minutes);
-    // TODO: an api call for saving the time in db
+    
+    try {
+      const response = await api.patch('/goals/focus', { minutes });
+
+      if (response.status === 200) {
+        const goalsResponse = await api.get('/goals/today');
+
+        setDailyGoals(goalsResponse.data.goals);
+        setStreak(goalsResponse.data.streak);
+      }
+    } catch (err) {
+      console.log(err);
+      alert('Error occured. There is a problem with focus time.');
+    }
   };
 
   const completedTasksCount = tasks.filter((t) => t.completed).length;
@@ -92,7 +107,7 @@ function Dashboard() {
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm max-w-md text-center">
           <p className="text-rose-600 font-semibold mb-2">Something went wrong!</p>
           <p className="text-slate-500 text-sm mb-4">{error}</p>
-          <button onClick={() => window.location.reload()} className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium cursor-pointer">Reîncearcă</button>
+          <button onClick={() => window.location.reload()} className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium cursor-pointer">Try again</button>
         </div>
       </div>
     );
@@ -137,7 +152,7 @@ function Dashboard() {
           />
           <MetricCard
             title="Current Streak"
-            value="7 days"
+            value={streak}
             subtext="Keep it up!"
             subtextColor="text-amber-600"
             iconBg="bg-amber-50"
