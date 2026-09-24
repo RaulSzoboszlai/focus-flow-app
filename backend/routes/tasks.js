@@ -34,6 +34,23 @@ router.get("/", async (req, res) => {
   }
 });
 
+router.get('/all', async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const tasks = await Task.find({
+      userId,
+    }).sort({
+      createdAt: -1,
+    });
+
+    res.status(200).json(tasks);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 router.post("/", checkSchema(createTaskSchema), async (req, res) => {
   const errors = validationResult(req);
 
@@ -109,6 +126,29 @@ router.patch("/:id/toggle", async (req, res) => {
     }
 
     res.status(200).json({ message: "Task successfully updated" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.patch("/:id", async (req, res) => {
+  try {
+    const taskId = req.params.id;
+    const userId = req.user.id;
+    const { title, category, time } = req.body;
+
+    const task = await Task.findOneAndUpdate(
+      { _id: taskId, userId },
+      { title, category, time },
+      { new: true }
+    );
+
+    if (!task) {
+      return res.status(404).json({ message: "Task was not found "});
+    }
+
+    return res.status(200).json(task);
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "Internal server error" });

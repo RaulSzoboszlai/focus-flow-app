@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
+import TasksPage from "./pages/TasksPage";
 import { AuthProvider } from "./context/AuthContext";
 import { ProtectedRoute, PublicRoute } from "./components/ProtectedRoute";
 
@@ -39,6 +40,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/tasks"
+            element={
+              <ProtectedRoute>
+                <TasksPage />
               </ProtectedRoute>
             }
           />
