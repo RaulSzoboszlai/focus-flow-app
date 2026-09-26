@@ -1,5 +1,6 @@
 import { useState } from "react";
 import api from "../../../services/api.js";
+import { NavLink } from "react-router-dom";
 
 function TasksWidget({ tasks, onToggleTask, onAddTask }) {
   const [isAddingTask, setIsAddingTask] = useState(false);
@@ -52,9 +53,9 @@ function TasksWidget({ tasks, onToggleTask, onAddTask }) {
       <div>
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-bold text-lg text-slate-900">Today's Tasks</h3>
-          <button className="text-xs text-indigo-600 font-semibold hover:underline cursor-pointer">
+          <NavLink to="/tasks" className="text-xs text-indigo-600 font-semibold hover:underline cursor-pointer">
             View All
-          </button>
+          </NavLink>
         </div>
 
         <div className="space-y-3 max-h-[280px] overflow-y-auto pr-1">

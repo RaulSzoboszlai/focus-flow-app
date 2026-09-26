@@ -144,7 +144,7 @@ router.patch("/focus", async (req, res) => {
         type: "time",
       },
       { $inc: { current: minutes } },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     if (!updatedGoal) {

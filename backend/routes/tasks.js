@@ -19,7 +19,7 @@ router.get("/", async (req, res) => {
 
     const tasks = await Task.find({
       userId: req.user.id,
-      createdAt: {
+      targetDate: {
         $gte: startOfDay,
         $lte: endOfDay,
       },
@@ -132,6 +132,28 @@ router.patch("/:id/toggle", async (req, res) => {
   }
 });
 
+router.patch("/:id/move-to-today", async (req, res) => {
+  try {
+    const taskId = req.params.id;
+    const userId = req.user.id;
+
+    const updatedTask = await Task.findOneAndUpdate(
+      { _id: taskId, userId },
+      { targetDate: new Date() },
+      { returnDocument: 'after' }
+    );
+
+    if (!updatedTask) {
+      return res.status(404).json({ message: "Task-ul nu a fost gasit "});
+    }
+
+    res.status(200).json(updatedTask);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 router.patch("/:id", async (req, res) => {
   try {
     const taskId = req.params.id;
@@ -141,7 +163,7 @@ router.patch("/:id", async (req, res) => {
     const task = await Task.findOneAndUpdate(
       { _id: taskId, userId },
       { title, category, time },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     if (!task) {

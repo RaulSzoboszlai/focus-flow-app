@@ -33,6 +33,18 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  settings: {
+    focusTimers: {
+      type: [Number],
+      default: [15, 30, 45, 60],
+      validate: {
+        validator: function(array) {
+          return array.length === 4;
+        },
+        message: "They are required exactly 4 time options."
+      }
+    },
+  },
 });
 
 const User = mongoose.model("User", userSchema);

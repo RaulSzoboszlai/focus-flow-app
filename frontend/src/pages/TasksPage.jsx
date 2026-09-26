@@ -10,6 +10,7 @@ function TaskPage() {
     category: "",
     time: "",
   });
+  const [activeTab, setActiveTab] = useState("active");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -75,6 +76,27 @@ function TaskPage() {
     }
   };
 
+  const filteredTaks = tasks.filter((task) => {
+    if (activeTab === "active") return !task.completed;
+    if (activeTab === "completed") return task.completed;
+    return true;
+  });
+
+  const handleMoveToToday = async (taskId) => {
+    try {
+      const response = await api.patch(`/tasks/${taskId}/move-to-today`);
+
+      if (response.status === 200) {
+        setTasks((prevTasks) =>
+          prevTasks.map((t) => (t._id === taskId ? response.data : t)),
+        );
+      }
+    } catch (err) {
+      console.log(err);
+      setError("Could not move the task for today.");
+    }
+  };
+
   return (
     <div className="flex h-screen bg-slate-50 text-slate-800 font-sans overflow-hidden">
       <Sidebar />
@@ -89,6 +111,39 @@ function TaskPage() {
           </p>
         </header>
 
+        <div className="flex space-x-6 border-b border-slate-200 mb-6">
+          <button
+            onClick={() => setActiveTab("active")}
+            className={`pb-3 text-sm font-medium transition-colors border-b-2 cursor-pointer ${
+              activeTab === "active"
+                ? "border-indigo-600 text-indigo-600"
+                : "border-transparent text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            To do
+          </button>
+          <button
+            onClick={() => setActiveTab("completed")}
+            className={`pb-3 text-sm font-medium transition-colors border-b-2 cursor-pointer ${
+              activeTab === "completed"
+                ? "border-indigo-600 text-indigo-600"
+                : "border-transparent text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            Completed
+          </button>
+          <button
+            onClick={() => setActiveTab("all")}
+            className={`pb-3 text-sm font-medium transition-colors border-b-2 cursor-pointer ${
+              activeTab === "all"
+                ? "border-indigo-600 text-indigo-600"
+                : "border-transparent text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            All
+          </button>
+        </div>
+
         {isLoading ? (
           <div className="flex justify-center py-10">
             <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
@@ -100,12 +155,14 @@ function TaskPage() {
         ) : (
           <div className="bg-white rounded-2xl border border-slate-200/50 shadow-sm overflow-hidden">
             <div className="divide-y divide-slate-100">
-              {tasks.length === 0 ? (
+              {filteredTaks.length === 0 ? (
                 <div className="p-8 text-center text-slate-500">
-                  There is no task available.
+                  {activeTab === "active" && "You have no tasks for today."}
+                  {activeTab === "completed" && "You didn't finished any task."}
+                  {activeTab === "all" && "You have no tasks created."}
                 </div>
               ) : (
-                tasks.map((task) => (
+                filteredTaks.map((task) => (
                   <div
                     key={task._id}
                     className="p-4 sm:p-5 flex items-center justify-between hover:bg-slate-50 transition border-b border-slate-100 last:border-0"
@@ -123,29 +180,32 @@ function TaskPage() {
                         />
                         <div className="flex gap-2">
                           <select
-                          value={editForm.category}
-                          onChange={(e) =>
-                            setEditForm({
-                              ...editForm,
-                              category: e.target.value,
-                            })
-                          }
-                          className="text-sm p-2 border border-slate-200 rounded-lg text-slate-600 focus:outline-none focus:border-indigo-300"
-                        >
-                          <option value="Personal">Personal</option>
-                          <option value="Work">Work</option>
-                          <option value="Health">Health</option>
-                          <option value="Learning">Learning</option>
-                        </select>
+                            value={editForm.category}
+                            onChange={(e) =>
+                              setEditForm({
+                                ...editForm,
+                                category: e.target.value,
+                              })
+                            }
+                            className="text-sm p-2 border border-slate-200 rounded-lg text-slate-600 focus:outline-none focus:border-indigo-300"
+                          >
+                            <option value="Personal">Personal</option>
+                            <option value="Work">Work</option>
+                            <option value="Health">Health</option>
+                            <option value="Learning">Learning</option>
+                          </select>
 
-                        <input 
-                          type="text"
-                          value={editForm.time}
-                          onChange={(e) => setEditForm({ ...editForm, time: e.target.value })}
-                          className="flex-1 text-xs p-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                          placeholder="Time (10:00am)"  />
+                          <input
+                            type="text"
+                            value={editForm.time}
+                            onChange={(e) =>
+                              setEditForm({ ...editForm, time: e.target.value })
+                            }
+                            className="flex-1 text-xs p-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                            placeholder="Time (10:00am)"
+                          />
                         </div>
-                        
+
                         <div className="flex gap-2 ml-2">
                           <button
                             onClick={() => submitEdit(task._id)}
@@ -188,25 +248,50 @@ function TaskPage() {
                         </div>
 
                         <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleEditClick(task)}
-                            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition cursor-pointer"
-                            title="Edit"
-                          >
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
+                          {!task.completed &&
+                            new Date(task.targetDate).toDateString() !==
+                              new Date().toDateString() && (
+                              <button
+                                onClick={() => handleMoveToToday(task._id)}
+                                className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition cursor-pointer"
+                                title="Move for today"
+                              >
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                  />
+                                </svg>
+                              </button>
+                            )}
+                          {!task.completed && (
+                            <button
+                              onClick={() => handleEditClick(task)}
+                              className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition cursor-pointer"
+                              title="Edit"
                             >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                              />
-                            </svg>
-                          </button>
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                                />
+                              </svg>
+                            </button>
+                          )}
                           <button
                             onClick={() => handleDelete(task._id)}
                             className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"

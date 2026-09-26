@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 
-function FocusTimerWidget({ onTimerComplete }) {
-  const TIME_OPTIONS = [15, 30, 45, 60];
-
+function FocusTimerWidget({ onTimerComplete, timerOptions = [15, 30, 45, 60] }) {
   const [selectedMinutes, setSelectedMinutes] = useState(30);
   const [timeLeft, setTimeLeft] = useState(selectedMinutes);
   const [isActive, setIsActive] = useState(false);
@@ -59,7 +57,7 @@ function FocusTimerWidget({ onTimerComplete }) {
 
       {!isActive && timeLeft === totalSeconds ? (
         <div className="flex gap-2 mb-6 bg-slate-50 p-1 rounded-xl border border-slate-100">
-          {TIME_OPTIONS.map((min) => (
+          {timerOptions.map((min) => (
             <button
               key={min}
               onClick={() => setSelectedMinutes(min)}

@@ -37,6 +37,10 @@ const taskSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  targetDate: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
 const Task = mongoose.model("Task", taskSchema);

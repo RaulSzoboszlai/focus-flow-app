@@ -13,6 +13,7 @@ function Dashboard() {
 
   const [tasks, setTasks] = useState([]);
   const [focusMinutes, setFocusMinutes] = useState(0);
+  const [customTimers, setCustomTimers] = useState([15, 30, 45, 60]);
   const [dailyGoals, setDailyGoals] = useState([]);
   const [streak, setStreak] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -23,14 +24,19 @@ function Dashboard() {
       try {
         setLoading(true);
 
-        const [tasksResponse, goalsResponse] = await Promise.all([
+        const [tasksResponse, goalsResponse, userResponse] = await Promise.all([
           api.get('/tasks'),
-          api.get('/goals/today')
+          api.get('/goals/today'),
+          api.get('/auth/me')
         ]);
 
         setTasks(tasksResponse.data);
         setDailyGoals(goalsResponse.data.goals);
         setStreak(goalsResponse.data.streak);
+
+        if (userResponse.data?.settings?.focusTimers) {
+          setCustomTimers(userResponse.data.settings.focusTimers);
+        }
 
         const timeGoal = goalsResponse.data.goals.find(goal => goal.type === 'time');
         if (timeGoal) {
@@ -88,7 +94,6 @@ function Dashboard() {
   };
 
   const completedTasksCount = tasks.filter((t) => t.completed).length;
-
 
   if (loading) {
     return (
@@ -172,7 +177,7 @@ function Dashboard() {
           </div>
 
           <div className="lg:col-span-1">
-            <FocusTimerWidget onTimerComplete={handleTimerComplete} />
+            <FocusTimerWidget onTimerComplete={handleTimerComplete} timerOptions={customTimers}/>
           </div>
 
           <div className="lg:col-span-1">

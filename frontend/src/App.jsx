@@ -3,6 +3,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import TasksPage from "./pages/TasksPage";
+import TimerPage from "./pages/TimerPage";
 import { AuthProvider } from "./context/AuthContext";
 import { ProtectedRoute, PublicRoute } from "./components/ProtectedRoute";
 
@@ -48,6 +49,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <TasksPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/timers"
+            element={
+              <ProtectedRoute>
+                <TimerPage />
               </ProtectedRoute>
             }
           />

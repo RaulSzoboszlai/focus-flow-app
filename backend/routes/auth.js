@@ -77,6 +77,51 @@ router.get("/status", (req, res) => {
   });
 });
 
+router.get("/me", async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password');
+
+    if (!user) {
+      return res.status(404).json({ message: "Could not find user" });
+    }
+
+    res.status(200).json(user);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.patch("/settings/timers", async (req, res) => {
+  try {
+    const { timers } = req.body;
+
+    if (!timers || !Array.isArray(timers) || timers.length !== 4) {
+      return res.status(400).json({ message: "Invalid timer settings" });
+    }
+
+    const areValidNumbers = timers.every(t => typeof t === 'number' && t > 0);
+    if (!areValidNumbers) {
+      return res.status(404).json({ message: "Timers must be positive" });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.id,
+      { $set: { "settings.focusTimers": timers } },
+      { returnDocument: 'after' }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User was not found" });
+    }
+
+    res.status(200).json(updatedUser.settings.focusTimers);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 router.post("/logout", (req, res) => {
   req.logout((err) => {
     if (err) {
