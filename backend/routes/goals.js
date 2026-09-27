@@ -4,7 +4,6 @@ import { createGoalSchema } from "../validators/validationGoalSchemas.js";
 import { isAuthenticated } from "../middleware/authMiddleware.js";
 import Goal from "../models/Goal.js";
 import User from "../models/User.js";
-import Task from "../models/Task.js";
 
 const router = Router();
 
@@ -14,15 +13,37 @@ router.get("/today", async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
 
     let goals = await Goal.find({
       userId,
-      date: today,
+      date: {
+        $gte: startOfDay,
+        $lte: endOfDay,
+      },
     });
 
     const user = await User.findById(userId);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (user.lastActiveDate) {
+      const lastActive = new Date(user.lastActiveDate);
+      lastActive.setHours(0, 0, 0, 0);
+
+      if (lastActive.getTime() < yesterday.getTime()) {
+        user.currentStreak = 0;
+        await user.save();
+      }
+    }
 
     if (goals.length > 0) {
       return res.status(200).json({
@@ -31,45 +52,6 @@ router.get("/today", async (req, res) => {
       });
     }
 
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    let newStreak = user.currentStreak || 0;
-
-    if (user.lastActiveDate) {
-      const lastActive = new Date(user.lastActiveDate);
-      lastActive.setHours(0, 0, 0, 0);
-
-      if (lastActive.getTime() === yesterday.getTime()) {
-        const yesterdayStart = new Date(0, 0, 0, 0);
-        const yesterdayEnd = new Date(23, 59, 59, 999);
-        const yesterdayTasks = await Task.find({
-          userId,
-          completed: true,
-          createdAt: {
-            $gte: yesterdayStart,
-            $lte: yesterdayEnd,
-          },
-        });
-
-        const completedTasks = yesterdayTasks.length > 0;
-
-        if (completedTasks) {
-          newStreak += 1;
-        } else {
-          newStreak = 0;
-        }
-      } else if (lastActive.getTime() < yesterday.getTime()) {
-        newStreak = 0;
-      }
-    } else {
-      newStreak = 0;
-    }
-
-    user.currentStreak = newStreak;
-    user.lastActiveDate = today;
-    await user.save();
-
     const defaultGoals = [
       {
         userId,
@@ -77,6 +59,7 @@ router.get("/today", async (req, res) => {
         type: "numeric",
         target: 3,
         current: 0,
+        date: startOfDay,
       },
       {
         userId,
@@ -84,6 +67,7 @@ router.get("/today", async (req, res) => {
         type: "time",
         target: 120,
         current: 0,
+        date: startOfDay,
       },
     ];
 
@@ -134,13 +118,19 @@ router.patch("/focus", async (req, res) => {
       return res.status(400).json({ message: "Invalid minutes provided" });
     }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
 
     const updatedGoal = await Goal.findOneAndUpdate(
       {
         userId,
-        date: today,
+        date: {
+          $gte: startOfDay,
+          $lte: endOfDay,
+        },
         type: "time",
       },
       { $inc: { current: minutes } },

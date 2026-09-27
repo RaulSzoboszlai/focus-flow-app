@@ -6,7 +6,7 @@ import TasksWidget from "../components/dashboard/widgets/TaskWidget";
 import GoalsWidget from "../components/dashboard/widgets/GoalsWidget";
 import FocusTimerWidget from "../components/dashboard/widgets/FocusTimerWidget";
 import { useEffect } from "react";
-import api from '../services/api.js';
+import api from "../services/api.js";
 
 function Dashboard() {
   const { user } = useAuth();
@@ -25,9 +25,9 @@ function Dashboard() {
         setLoading(true);
 
         const [tasksResponse, goalsResponse, userResponse] = await Promise.all([
-          api.get('/tasks'),
-          api.get('/goals/today'),
-          api.get('/auth/me')
+          api.get("/tasks"),
+          api.get("/goals/today"),
+          api.get("/auth/me"),
         ]);
 
         setTasks(tasksResponse.data);
@@ -38,7 +38,9 @@ function Dashboard() {
           setCustomTimers(userResponse.data.settings.focusTimers);
         }
 
-        const timeGoal = goalsResponse.data.goals.find(goal => goal.type === 'time');
+        const timeGoal = goalsResponse.data.goals.find(
+          (goal) => goal.type === "time",
+        );
         if (timeGoal) {
           setFocusMinutes(timeGoal.current);
         }
@@ -63,9 +65,15 @@ function Dashboard() {
       const response = await api.patch(`/tasks/${taskId}/toggle`);
 
       if (response.status === 200) {
-        setTasks(tasks.map(task => task._id === taskId ? { ...task, completed: !task.completed } : task));
+        setTasks(
+          tasks.map((task) =>
+            task._id === taskId
+              ? { ...task, completed: !task.completed }
+              : task,
+          ),
+        );
 
-        const goalsResponse = await api.get('/goals/today');
+        const goalsResponse = await api.get("/goals/today");
         setDailyGoals(goalsResponse.data.goals);
         setStreak(goalsResponse.data.streak);
       }
@@ -77,30 +85,35 @@ function Dashboard() {
 
   const handleTimerComplete = async (minutes) => {
     setFocusMinutes((prev) => prev + minutes);
-    
+
     try {
-      const response = await api.patch('/goals/focus', { minutes });
+      const response = await api.patch("/goals/focus", { minutes });
 
       if (response.status === 200) {
-        const goalsResponse = await api.get('/goals/today');
+        const goalsResponse = await api.get("/goals/today");
 
         setDailyGoals(goalsResponse.data.goals);
         setStreak(goalsResponse.data.streak);
       }
     } catch (err) {
       console.log(err);
-      alert('Error occured. There is a problem with focus time.');
+      alert("Error occured. There is a problem with focus time.");
     }
   };
 
   const completedTasksCount = tasks.filter((t) => t.completed).length;
+  const totalTasksToday = tasks.length;
+  const isAllCompleted =
+    totalTasksToday > 0 && completedTasksCount === totalTasksToday;
 
   if (loading) {
     return (
       <div className="flex h-screen bg-slate-50 items-center justify-center font-sans">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-slate-500 text-sm font-medium">Dashboard is loading...</p>
+          <p className="text-slate-500 text-sm font-medium">
+            Dashboard is loading...
+          </p>
         </div>
       </div>
     );
@@ -110,9 +123,16 @@ function Dashboard() {
     return (
       <div className="flex h-screen bg-slate-50 items-center justify-center font-sans p-4">
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm max-w-md text-center">
-          <p className="text-rose-600 font-semibold mb-2">Something went wrong!</p>
+          <p className="text-rose-600 font-semibold mb-2">
+            Something went wrong!
+          </p>
           <p className="text-slate-500 text-sm mb-4">{error}</p>
-          <button onClick={() => window.location.reload()} className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium cursor-pointer">Try again</button>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium cursor-pointer"
+          >
+            Try again
+          </button>
         </div>
       </div>
     );
@@ -137,8 +157,14 @@ function Dashboard() {
         <section className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8">
           <MetricCard
             title="Tasks Completed"
-            value={completedTasksCount} 
-            subtext={`+${completedTasksCount} today`}
+            value={`${completedTasksCount} / ${totalTasksToday}`}
+            subtext={
+              totalTasksToday === 0
+                ? "No tasks for today"
+                : isAllCompleted
+                  ? "All done for today!"
+                  : `${totalTasksToday - completedTasksCount} taks remaining`
+            }
             icon={
               <svg
                 className="w-5 h-5"
@@ -171,13 +197,19 @@ function Dashboard() {
         </section>
 
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-    
           <div className="lg:col-span-1">
-            <TasksWidget tasks={tasks} onToggleTask={handleToggleTask} onAddTask={handleAddTask} />
+            <TasksWidget
+              tasks={tasks}
+              onToggleTask={handleToggleTask}
+              onAddTask={handleAddTask}
+            />
           </div>
 
           <div className="lg:col-span-1">
-            <FocusTimerWidget onTimerComplete={handleTimerComplete} timerOptions={customTimers}/>
+            <FocusTimerWidget
+              onTimerComplete={handleTimerComplete}
+              timerOptions={customTimers}
+            />
           </div>
 
           <div className="lg:col-span-1">

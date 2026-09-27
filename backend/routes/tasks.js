@@ -4,6 +4,7 @@ import { checkSchema, matchedData, validationResult } from "express-validator";
 import { createTaskSchema } from "../validators/validationTaskSchemas.js";
 import Task from "../models/Task.js";
 import Goal from "../models/Goal.js";
+import User from "../models/User.js";
 
 const router = Router();
 
@@ -103,6 +104,26 @@ router.patch("/:id/toggle", async (req, res) => {
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+
+    if (incrementValue === 1) {
+      const user = await User.findById(userId);
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+
+      const lastActive = user.lastActiveDate ? new Date(user.lastActiveDate) : null;
+      if (lastActive)
+        lastActive.setHours(0, 0, 0, 0);
+
+      if (!lastActive || lastActive.getTime() < yesterday.getTime()) {
+        user.currentStreak = 1;
+        user.lastActiveDate = today;
+        await user.save();
+      } else if (lastActive.getTime() === yesterday.getTime()) {
+        user.currentStreak += 1;
+        user.lastActiveDate = today;
+        await user.save();
+      }
+    }
 
     await Goal.findOneAndUpdate(
       {

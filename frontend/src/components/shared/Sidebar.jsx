@@ -91,7 +91,7 @@ function Sidebar() {
       <div className="relative">
         <div className="mb-4 p-4 bg-indigo-50/60 rounded-xl border border-indigo-100/50">
           <p className="text-xs text-indigo-700 font-medium leading-relaxed">
-            ✨ You've got this! Small steps lead to big results.
+            You've got this! Small steps lead to big results.
           </p>
         </div>
 

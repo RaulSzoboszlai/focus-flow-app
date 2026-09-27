@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 
-function FocusTimerWidget({ onTimerComplete, timerOptions = [15, 30, 45, 60] }) {
+function FocusTimerWidget({
+  onTimerComplete,
+  timerOptions = [15, 30, 45, 60],
+}) {
   const [selectedMinutes, setSelectedMinutes] = useState(30);
   const [timeLeft, setTimeLeft] = useState(selectedMinutes);
   const [isActive, setIsActive] = useState(false);
@@ -128,21 +131,20 @@ function FocusTimerWidget({ onTimerComplete, timerOptions = [15, 30, 45, 60] }) 
         {timeLeft !== totalSeconds && (
           <button
             onClick={resetTimer}
-            className="py-2.5 px-3 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl transition cursor-pointer"
+            className="flex items-center justify-center w-10 h-10 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl transition cursor-pointer"
             title="Reset"
           >
             <svg
               className="w-5 h-5"
               fill="none"
               stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
               viewBox="0 0 24 24"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18"
-              />
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+              <path d="M3 3v5h5" />
             </svg>
           </button>
         )}
