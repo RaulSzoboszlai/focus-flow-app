@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import Sidebar from "../components/shared/Sidebar";
 import MetricCard from "../components/dashboard/cards/MetricCard";
 import TasksWidget from "../components/dashboard/widgets/TaskWidget";
 import GoalsWidget from "../components/dashboard/widgets/GoalsWidget";
 import FocusTimerWidget from "../components/dashboard/widgets/FocusTimerWidget";
 import { useEffect } from "react";
 import api from "../services/api.js";
+import PageLayout from "../components/shared/PageLayout.jsx";
+import LoadingState from "../components/shared/LoadingState.jsx";
 
 function Dashboard() {
   const { user } = useAuth();
@@ -16,13 +17,13 @@ function Dashboard() {
   const [customTimers, setCustomTimers] = useState([15, 30, 45, 60]);
   const [dailyGoals, setDailyGoals] = useState([]);
   const [streak, setStreak] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        setLoading(true);
+        setIsLoading(true);
 
         const [tasksResponse, goalsResponse, userResponse] = await Promise.all([
           api.get("/tasks"),
@@ -45,11 +46,11 @@ function Dashboard() {
           setFocusMinutes(timeGoal.current);
         }
 
-        setLoading(false);
+        setIsLoading(false);
       } catch (err) {
         console.log(err);
-        setError("Couldn't get retrieve data. Please try again.");
-        setLoading(false);
+        setError("Couldn't retrieve data. Please try again.");
+        setIsLoading(false);
       }
     };
 
@@ -106,98 +107,26 @@ function Dashboard() {
   const isAllCompleted =
     totalTasksToday > 0 && completedTasksCount === totalTasksToday;
 
-  if (loading) {
-    return (
-      <div className="flex h-screen bg-slate-50 items-center justify-center font-sans">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-slate-500 text-sm font-medium">
-            Dashboard is loading...
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex h-screen bg-slate-50 items-center justify-center font-sans p-4">
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm max-w-md text-center">
-          <p className="text-rose-600 font-semibold mb-2">
-            Something went wrong!
-          </p>
-          <p className="text-slate-500 text-sm mb-4">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium cursor-pointer"
-          >
-            Try again
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex h-screen bg-slate-50 text-slate-800 font-sans overflow-hidden">
-      <Sidebar />
-
-      <main className="flex-1 overflow-y-auto p-8">
-        <header className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-              Good morning, {user?.displayName}!
-            </h1>
-            <p className="text-slate-500 text-sm mt-0.5">
-              Let's make today productive.
-            </p>
-          </div>
-        </header>
-
-        <section className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8">
-          <MetricCard
-            title="Tasks Completed"
-            value={`${completedTasksCount} / ${totalTasksToday}`}
-            subtext={
-              totalTasksToday === 0
-                ? "No tasks for today"
-                : isAllCompleted
-                  ? "All done for today!"
-                  : `${totalTasksToday - completedTasksCount} taks remaining`
-            }
-            icon={
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-            }
+    <PageLayout
+      title={`Good morning, ${user?.displayName}!`}
+      subtitle={"Let's make today productive."}
+    >
+      {isLoading ? (
+        <div className="flex-1 flex items-center justify-center">
+          <LoadingState message="Dashboard is loading..." />
+        </div>
+      ) : error ? (
+        <div>
+          <ErrorMessage
+            type="error"
+            message={error}
+            onRetry={() => window.location.reload()}
           />
-          <MetricCard
-            title="Current Streak"
-            value={streak}
-            subtext="Keep it up!"
-            subtextColor="text-amber-600"
-            iconBg="bg-amber-50"
-            iconColor="text-amber-500"
-            icon={
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M11.357 2.015a.75.75 0 01.319.647c-.077.525.035 1.054.306 1.493l.276.447a5.025 5.025 0 004.066 2.33 7.5 7.5 0 01-.73 12.49 7.45 7.45 0 01-7.467.369 7.45 7.45 0 01-4.38-6.196 7.45 7.45 0 011.637-5.938c.312-.38.742-.647 1.229-.76l1.23-.287c.833-.195 1.5-.778 1.749-1.59l.345-1.121a.75.75 0 01.593-.518z" />
-              </svg>
-            }
-          />
-        </section>
-
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-          <div className="lg:col-span-1">
+        </div>
+      ) : (
+        <section className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 lg:grid-rows-4 gap-4 md:gap-6 lg:min-h-[680px]">
+          <div className="md:col-span-2 lg:col-span-2 lg:row-span-2 min-h-0">
             <TasksWidget
               tasks={tasks}
               onToggleTask={handleToggleTask}
@@ -205,19 +134,68 @@ function Dashboard() {
             />
           </div>
 
-          <div className="lg:col-span-1">
+          <div className="md:col-span-1 lg:col-span-1 min-h-0">
+            <MetricCard
+              title="Tasks Completed"
+              value={`${completedTasksCount} / ${totalTasksToday}`}
+              subtext={
+                totalTasksToday === 0
+                  ? "No tasks for today"
+                  : isAllCompleted
+                    ? "All done for today!"
+                    : `${totalTasksToday - completedTasksCount} tasks remaining`
+              }
+              icon={
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              }
+            />
+          </div>
+
+          <div className="md:col-span-1 lg:col-span-1 min-h-0">
+            <MetricCard
+              title="Current Streak"
+              value={streak}
+              subtext="Keep it up!"
+              subtextColor="text-amber-600"
+              iconBg="bg-amber-50"
+              iconColor="text-amber-500"
+              icon={
+                <svg
+                  className="w-5 h-5"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M11.357 2.015a.75.75 0 01.319.647c-.077.525.035 1.054.306 1.493l.276.447a5.025 5.025 0 004.066 2.33 7.5 7.5 0 01-.73 12.49 7.45 7.45 0 01-7.467.369 7.45 7.45 0 01-4.38-6.196 7.45 7.45 0 011.637-5.938c.312-.38.742-.647 1.229-.76l1.23-.287c.833-.195 1.5-.778 1.749-1.59l.345-1.121a.75.75 0 01.593-.518z" />
+                </svg>
+              }
+            />
+          </div>
+
+          <div className="md:col-span-1 lg:col-span-1 lg:row-span-2 min-h-0">
             <FocusTimerWidget
               onTimerComplete={handleTimerComplete}
               timerOptions={customTimers}
             />
           </div>
 
-          <div className="lg:col-span-1">
+          <div className="md:col-span-1 lg:col-span-2 lg:row-span-2 min-h-0">
             <GoalsWidget goals={dailyGoals} />
           </div>
         </section>
-      </main>
-    </div>
+      )}
+    </PageLayout>
   );
 }
 

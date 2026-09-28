@@ -11,15 +11,15 @@ function GoalsWidget({ goals }) {
   };
 
   return (
-    <div className="bg-white p-6 rounded-2xl border border-slate-200/50 shadow-sm h-full">
-      <div className="flex justify-between items-center mb-6">
+    <div className="bg-white p-6 rounded-2xl border border-slate-200/50 shadow-sm h-full flex flex-col">
+      <div className="flex justify-between items-center mb-6 shrink-0">
         <h3 className="font-bold text-lg text-slate-900">Daily Goals</h3>
         <button className="text-xs text-indigo-600 font-semibold hover:underline cursor-pointer">
           View All
         </button>
       </div>
 
-      <div className="space-y-5">
+      <div className="space-y-5 flex-1 overflow-y-auto">
         {goals.map((goal) => (
           <div key={goal._id} className="space-y-2">
             <div className="flex justify-between items-center text-sm">

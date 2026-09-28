@@ -5,7 +5,7 @@ function FocusTimerWidget({
   timerOptions = [15, 30, 45, 60],
 }) {
   const [selectedMinutes, setSelectedMinutes] = useState(30);
-  const [timeLeft, setTimeLeft] = useState(selectedMinutes);
+  const [timeLeft, setTimeLeft] = useState(30 * 60);
   const [isActive, setIsActive] = useState(false);
 
   useEffect(() => {
@@ -53,70 +53,74 @@ function FocusTimerWidget({
     440 - (440 * (totalSeconds - timeLeft)) / totalSeconds;
 
   return (
-    <div className="bg-white p-6 rounded-2xl border border-slate-200/50 shadow-sm flex flex-col items-center justify-center h-full min-h-[360px]">
-      <h3 className="font-bold text-lg text-slate-900 mb-4 self-start">
+    <div className="bg-white p-4 md:p-6 rounded-2xl border border-slate-200/50 shadow-sm flex flex-col items-center h-full min-h-0 min-w-0 overflow-hidden">
+      <h3 className="font-bold text-lg text-slate-900 mb-3 self-start shrink-0">
         Focus Timer
       </h3>
-
-      {!isActive && timeLeft === totalSeconds ? (
-        <div className="flex gap-2 mb-6 bg-slate-50 p-1 rounded-xl border border-slate-100">
-          {timerOptions.map((min) => (
-            <button
-              key={min}
-              onClick={() => setSelectedMinutes(min)}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition cursor-pointer ${
-                selectedMinutes === min
-                  ? "bg-indigo-600 text-white shadow-sm"
-                  : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"
-              }`}
-            >
-              {min}m
-            </button>
-          ))}
-        </div>
-      ) : (
-        <div className="h-9 mb-6 flex items-center">
-          <span className="text-xs font-medium text-slate-400 bg-slate-50 px-3 py-1 rounded-lg border border-slate-100">
-            Session of {selectedMinutes} minutes
-          </span>
-        </div>
-      )}
-
-      <div className="relative flex items-center justify-center w-40 h-40 mb-6">
-        <svg
-          className="w-full h-full transform -rotate-90"
-          viewBox="0 0 160 160"
-        >
-          <circle
-            cx="80"
-            cy="80"
-            r="70"
-            className="stroke-slate-100 fill-none"
-            strokeWidth="8"
-          />
-          <circle
-            cx="80"
-            cy="80"
-            r="70"
-            className="stroke-indigo-600 fill-none transition-all duration-1000 ease-linear"
-            strokeWidth="8"
-            strokeDasharray="440"
-            strokeDashoffset={strokeDashoffset}
-            strokeLinecap="round"
-          />
-        </svg>
-
-        <div className="absolute flex flex-col items-center justify-center">
-          <span className="text-xs font-semibold text-slate-400 tracking-wider uppercase mb-0.5">
-            Focus
-          </span>
-          <span className="text-3xl font-bold text-slate-800 tracking-tight">
-            {formatTime(timeLeft)}
-          </span>
+ 
+      <div className="shrink-0 w-full flex justify-center">
+        {!isActive && timeLeft === totalSeconds ? (
+          <div className="flex flex-wrap justify-center gap-1.5 max-w-full bg-slate-50 p-1 rounded-xl border border-slate-100">
+            {timerOptions.map((min) => (
+              <button
+                key={min}
+                onClick={() => setSelectedMinutes(min)}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition cursor-pointer ${
+                  selectedMinutes === min
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"
+                }`}
+              >
+                {min}m
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="min-h-9 flex items-center">
+            <span className="text-xs font-medium text-slate-400 bg-slate-50 px-3 py-1 rounded-lg border border-slate-100">
+              Session of {selectedMinutes} minutes
+            </span>
+          </div>
+        )}
+      </div>
+ 
+      <div className="flex-1 min-h-[5.5rem] w-full flex items-center justify-center my-3">
+        <div className="relative h-full max-h-40 max-w-full aspect-square flex items-center justify-center">
+          <svg
+            className="w-full h-full transform -rotate-90"
+            viewBox="0 0 160 160"
+          >
+            <circle
+              cx="80"
+              cy="80"
+              r="70"
+              className="stroke-slate-100 fill-none"
+              strokeWidth="8"
+            />
+            <circle
+              cx="80"
+              cy="80"
+              r="70"
+              className="stroke-indigo-600 fill-none transition-all duration-1000 ease-linear"
+              strokeWidth="8"
+              strokeDasharray="440"
+              strokeDashoffset={strokeDashoffset}
+              strokeLinecap="round"
+            />
+          </svg>
+ 
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className="text-[10px] sm:text-xs font-semibold text-slate-400 tracking-wider uppercase leading-none mb-1">
+              Focus
+            </span>
+            <span className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-800 tracking-tight leading-none">
+              {formatTime(timeLeft)}
+            </span>
+          </div>
         </div>
       </div>
-
-      <div className="flex gap-3 w-full max-w-[200px]">
+ 
+      <div className="flex gap-3 w-full max-w-[200px] shrink-0">
         <button
           onClick={toggleTimer}
           className={`flex-1 py-2.5 px-4 font-semibold text-sm rounded-xl shadow-sm transition cursor-pointer text-center ${
@@ -127,11 +131,11 @@ function FocusTimerWidget({
         >
           {isActive ? "Pause" : "Start"}
         </button>
-
+ 
         {timeLeft !== totalSeconds && (
           <button
             onClick={resetTimer}
-            className="flex items-center justify-center w-10 h-10 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl transition cursor-pointer"
+            className="flex items-center justify-center w-10 h-10 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl transition cursor-pointer shrink-0"
             title="Reset"
           >
             <svg

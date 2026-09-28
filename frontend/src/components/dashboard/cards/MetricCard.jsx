@@ -8,7 +8,7 @@ function MetricCard({
   iconColor = "text-indigo-600",
 }) {
   return (
-    <div className="bg-white p-5 rounded-2xl border border-slate-200/50 shadow-sm flex justify-between items-start">
+    <div className="bg-white p-5 rounded-2xl border border-slate-200/50 shadow-sm flex justify-between items-start h-full">
       <div>
         <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
           {title}
