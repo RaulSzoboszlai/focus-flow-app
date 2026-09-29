@@ -6,6 +6,7 @@ import {
   registerSchema,
   loginSchema,
 } from "../validators/validationAuthSchemas.js";
+import { isAuthenticated } from "../middleware/authMiddleware.js";
 import passport from "passport";
 
 const router = Router();
@@ -38,7 +39,7 @@ router.post("/register", checkSchema(registerSchema), async (req, res) => {
 router.post("/login", checkSchema(loginSchema), async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).json({ message: errors.array() });
+    return res.status(400).json({ errors: errors.array() });
   }
 
   passport.authenticate("local", (err, user, info) => {
@@ -77,9 +78,29 @@ router.get("/status", (req, res) => {
   });
 });
 
+router.post("/logout", (req, res) => {
+  req.logout((err) => {
+    if (err) {
+      console.log(err);
+    }
+
+    req.session.destroy((sessionErr) => {
+      if (sessionErr) {
+        console.log(sessionErr);
+        return res.status(500).json({ message: "Internal server error" });
+      }
+
+      res.clearCookie("connect.sid");
+      return res.status(200).json({ message: "Logged out successfully" });
+    });
+  });
+});
+
+router.use(isAuthenticated);
+
 router.get("/me", async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select('-password');
+    const user = await User.findById(req.user.id).select("-password");
 
     if (!user) {
       return res.status(404).json({ message: "Could not find user" });
@@ -100,15 +121,19 @@ router.patch("/settings/timers", async (req, res) => {
       return res.status(400).json({ message: "Invalid timer settings" });
     }
 
-    const areValidNumbers = timers.every(t => typeof t === 'number' && t > 0);
+    const areValidNumbers = timers.every(
+      (t) => Number.isInteger(t) && t >= 1 && t <= 180,
+    );
     if (!areValidNumbers) {
-      return res.status(404).json({ message: "Timers must be positive" });
+      return res
+        .status(400)
+        .json({ message: "Timers must be integers between 1 and 180" });
     }
 
     const updatedUser = await User.findByIdAndUpdate(
       req.user.id,
       { $set: { "settings.focusTimers": timers } },
-      { returnDocument: 'after' }
+      { returnDocument: "after" },
     );
 
     if (!updatedUser) {
@@ -120,24 +145,6 @@ router.patch("/settings/timers", async (req, res) => {
     console.log(err);
     res.status(500).json({ message: "Internal server error" });
   }
-});
-
-router.post("/logout", (req, res) => {
-  req.logout((err) => {
-    if (err) {
-      console.log(err);
-    }
-
-    req.session.destroy((sessionErr) => {
-      if (sessionErr) {
-        console.log(sessionErr);
-        return res.status(500).json({ message: "Internal server error" });
-      }
-
-      res.clearCookie("connect.sid");
-      return res.status(200).json({ message: "Logged out successfully" });
-    });
-  });
 });
 
 export default router;

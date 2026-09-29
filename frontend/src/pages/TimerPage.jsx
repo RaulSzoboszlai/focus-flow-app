@@ -1,56 +1,15 @@
-import { useEffect, useState } from "react";
+import { useTimerSettings } from "../hooks/useTimerSettings";
 import PageLayout from "../components/shared/PageLayout";
 import ErrorMessage from "../components/shared/ErrorMessage";
 import LoadingState from "../components/shared/LoadingState";
-import api from "../services/api";
 
 function TimerPage() {
-  const [timers, setTimers] = useState([15, 30, 45, 60]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [message, setMessage] = useState({ type: "", text: "" });
+  const { timers, isLoading, isSaving, message, updateTimer, saveTimers } =
+    useTimerSettings();
 
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        setIsLoading(true);
-      } catch (err) {
-        console.log(err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchSettings();
-  }, []);
-
-  const handleTimerChange = (index, value) => {
-    const newTimers = [...timers];
-    newTimers[index] = Number(value);
-    setTimers(newTimers);
-  };
-
-  const handleSave = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    setIsSaving(true);
-    setMessage({ type: "", text: "" });
-
-    try {
-      const res = await api.patch("/auth/settings/timers", { timers });
-
-      if (res.status === 200) {
-        setMessage({ type: "success", text: "The settings were saved" });
-        setTimers(res.data);
-      }
-    } catch (err) {
-      console.log(err);
-      setMessage({
-        type: "error",
-        text: err.response?.data?.message || "There is a saving problem",
-      });
-    } finally {
-      setIsSaving(false);
-    }
+    saveTimers();
   };
 
   return (
@@ -65,7 +24,7 @@ function TimerPage() {
           <ErrorMessage type={message.type} message={message.text} />
 
           <div className="bg-white rounded-2xl border border-slate-200/50 shadow-sm overflow-hidden">
-            <form onSubmit={handleSave}>
+            <form onSubmit={handleSubmit}>
               <div className="p-6 border-b border-slate-100 bg-white">
                 <h2 className="text-base font-semibold text-slate-800">
                   Focus Timer
@@ -100,7 +59,7 @@ function TimerPage() {
                         max="180"
                         value={time}
                         onChange={(e) =>
-                          handleTimerChange(index, e.target.value)
+                          updateTimer(index, e.target.value)
                         }
                         className="w-20 text-sm p-2 text-center border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-700"
                         required
